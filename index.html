@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOKOLINKS - LOKO2K Cyber Monochrome</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      font-family: 'Rajdhani', sans-serif;
+      background-image: 
+        radial-gradient(circle at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.98) 100%),
+        url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop'); 
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .font-cyber { font-family: 'Orbitron', sans-serif; }
+
+    /* Scanlines Overlay Effect */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    /* Black & White Glassmorphism Card */
+    .glass-monochrome {
+      background: rgba(10, 10, 10, 0.88);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .glass-monochrome:hover {
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Glitch Animation Effect */
+    .glitch-text {
+      position: relative;
+      display: inline-block;
+    }
+    .glitch-text::before, .glitch-text::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #000;
+    }
+    .glitch-text::before {
+      left: 2px; text-shadow: -2px 0 #ffffff;
+      clip: rect(24px, 550px, 90px, 0);
+      animation: glitch-anim 3s infinite linear alternate-reverse;
+    }
+    .glitch-text::after {
+      left: -2px; text-shadow: -2px 0 #888888;
+      clip: rect(85px, 550px, 140px, 0);
+      animation: glitch-anim2 2.5s infinite linear alternate-reverse;
+    }
+    @keyframes glitch-anim {
+      0% { clip: rect(12px, 9999px, 44px, 0); }
+      20% { clip: rect(88px, 9999px, 12px, 0); }
+      40% { clip: rect(32px, 9999px, 90px, 0); }
+      60% { clip: rect(65px, 9999px, 10px, 0); }
+      80% { clip: rect(10px, 9999px, 85px, 0); }
+      100% { clip: rect(50px, 9999px, 30px, 0); }
+    }
+    @keyframes glitch-anim2 {
+      0% { clip: rect(70px, 9999px, 10px, 0); }
+      20% { clip: rect(15px, 9999px, 80px, 0); }
+      40% { clip: rect(55px, 9999px, 20px, 0); }
+      60% { clip: rect(30px, 9999px, 95px, 0); }
+      80% { clip: rect(90px, 9999px, 40px, 0); }
+      100% { clip: rect(5px, 9999px, 60px, 0); }
+    }
+
+    .btn-monochrome {
+      background: #ffffff;
+      color: #000000;
+      transition: all 0.3s ease-in-out;
+    }
+    .btn-monochrome:hover {
+      background: #000000;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+      border: 1px solid #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: #ffffff;
+      box-shadow: 0 0 10px #ffffff;
+      transition: width 0.1s linear;
+    }
+  </style>
+</head>
+<body class="p-4 max-w-4xl mx-auto min-h-screen flex flex-col justify-between relative z-20">
+
+  <!-- DYNAMIC SOCIAL BAR CONTAINER -->
+  <div id="socialBarContainer"></div>
+
+  <!-- NAVIGATION BAR -->
+  <div class="flex justify-between items-center mb-6 border-b border-white/20 pb-4">
+    <h1 class="text-2xl font-black font-cyber tracking-widest text-white flex items-center gap-2 glitch-text" data-text="LOKO2K // LOKOLINKS">
+      <i class="fa-solid fa-bolt text-white animate-pulse"></i> LOKO2K <span class="text-xs bg-white text-black px-2 py-0.5 rounded font-bold">PRO</span>
+    </h1>
+    <div id="navRight" class="flex gap-2"></div>
+  </div>
+
+  <!-- USER DASHBOARD -->
+  <div id="dashboardView" class="hidden space-y-6">
+    <div class="grid grid-cols-2 gap-4">
+      <div class="glass-monochrome p-4 rounded-xl border-l-4 border-l-white">
+        <p class="text-[10px] text-gray-400 font-cyber tracking-widest">TOTAL SHORTLINKS</p>
+        <p id="statTotalLinks" class="text-3xl font-black font-cyber text-white mt-1">0</p>
+      </div>
+      <div class="glass-monochrome p-4 rounded-xl border-l-4 border-l-gray-400">
+        <p class="text-[10px] text-gray-400 font-cyber tracking-widest">REALTIME LINK VIEWS</p>
+        <p id="statLinkViews" class="text-3xl font-black font-cyber text-white mt-1">0</p>
+      </div>
+    </div>
+
+    <!-- Create Link -->
+    <div class="glass-monochrome p-5 rounded-2xl">
+      <h2 class="text-xs font-cyber font-bold text-white tracking-wider mb-3 flex items-center gap-2">
+        <i class="fa-solid fa-plus-circle"></i> CREATE MONETIZED SHORTLINK
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input id="longUrl" type="text" placeholder="Destination URL (Drive / Mediafire)" class="md:col-span-2 bg-black/90 border border-white/20 p-3 text-xs rounded-xl text-white focus:outline-none focus:border-white transition">
+        <input id="customSlug" type="text" placeholder="Custom Label (Optional)" class="bg-black/90 border border-white/20 p-3 text-xs rounded-xl text-white focus:outline-none focus:border-white transition">
+      </div>
+      <button onclick="generateLink()" class="w-full mt-3 btn-monochrome font-cyber font-black py-3 rounded-xl text-xs tracking-widest">GENERATE SHAREABLE LINK</button>
+    </div>
+
+    <!-- Active Links Table -->
+    <div class="glass-monochrome p-5 rounded-2xl">
+      <h2 class="text-xs font-cyber font-bold text-gray-300 tracking-wider mb-3">YOUR ACTIVE SHORTLINKS</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="text-gray-400 border-b border-white/10 font-cyber">
+            <tr>
+              <th class="p-3">LABEL / CODE</th>
+              <th class="p-3">DESTINATION</th>
+              <th class="p-3">REALTIME VIEWS</th>
+              <th class="p-3 text-right">ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="linkList" class="divide-y divide-white/10"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH VIEW -->
+  <div id="authView" class="hidden max-w-md mx-auto my-auto w-full glass-monochrome p-8 rounded-2xl space-y-4">
+    <h2 id="authTitle" class="text-lg font-cyber font-black text-white text-center tracking-widest glitch-text" data-text="AUTHENTICATE ACCESS">AUTHENTICATE ACCESS</h2>
+    <div class="space-y-3">
+      <input id="authEmail" type="email" placeholder="Email Address" class="w-full bg-black/90 border border-white/20 p-3 text-xs rounded-xl text-white focus:outline-none">
+      <input id="authPassword" type="password" placeholder="Password" class="w-full bg-black/90 border border-white/20 p-3 text-xs rounded-xl text-white focus:outline-none">
+      
+      <div id="inviteCodeContainer" class="hidden">
+        <label class="text-[10px] text-gray-300 font-cyber block mb-1">🔑 REQUIRED ADMIN INVITE CODE:</label>
+        <input id="authInviteCode" type="text" placeholder="Enter Invite Code" class="w-full bg-black/90 border border-white/40 p-3 text-xs rounded-xl text-white focus:outline-none">
+      </div>
+
+      <button id="authPrimaryBtn" onclick="handleAuthSubmit()" class="w-full btn-monochrome font-cyber font-black py-3 rounded-xl text-xs tracking-widest">LOGIN</button>
+      <button id="authToggleBtn" onclick="toggleAuthMode()" class="w-full text-xs text-gray-400 hover:text-white transition">Have an invite code? Register here</button>
+    </div>
+  </div>
+
+  <!-- ADMIN CONTROL PANEL MODAL -->
+  <div id="adminPanelModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="glass-monochrome p-6 rounded-2xl w-full max-w-lg space-y-4 border-white/40 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-white/20 pb-2">
+        <h3 class="text-xs font-cyber font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-crown text-white"></i> Admin Control Panel</h3>
+        <button onclick="closeAdminPanel()" class="text-gray-400 hover:text-white">&times;</button>
+      </div>
+      
+      <div class="p-3 bg-black border border-white/20 rounded-xl">
+        <label class="text-xs font-cyber font-bold text-white block mb-1">🎯 Required Ad Clicks Before Unlock:</label>
+        <select id="adminAdClicks" class="w-full bg-black/90 border border-white/20 p-2 text-xs rounded-lg text-white focus:outline-none">
+          <option value="1">1 Ad Click (Fast Pass)</option>
+          <option value="2">2 Ad Clicks (Standard Monetization)</option>
+          <option value="3">3 Ad Clicks (Maximum Revenue)</option>
+        </select>
+      </div>
+
+      <div class="p-3 bg-black border border-white/20 rounded-xl space-y-2">
+        <label class="text-xs font-cyber font-bold text-white block">📩 Invite Code Generator</label>
+        <div class="flex gap-2">
+          <input id="generatedInviteCode" readonly type="text" placeholder="Click Generate Code..." class="w-full bg-black border border-white/20 p-2 text-xs rounded-lg text-white font-mono">
+          <button onclick="generateInviteCode()" class="bg-white text-black font-cyber font-bold text-xs px-3 py-2 rounded-lg hover:bg-gray-200">GENERATE</button>
+        </div>
+      </div>
+
+      <div class="p-3 bg-black border border-white/20 rounded-xl space-y-2">
+        <label class="text-xs font-cyber font-bold text-gray-400 block">👥 Registered Users (<span id="userCount">0</span>)</label>
+        <div id="userList" class="space-y-1 text-xs max-h-28 overflow-y-auto font-mono text-gray-400"></div>
+      </div>
+
+      <button onclick="saveAdminRules()" class="w-full bg-white text-black font-cyber font-bold py-3 rounded-xl text-xs tracking-wider hover:bg-gray-200">SAVE GLOBAL ADMIN RULES</button>
+    </div>
+  </div>
+
+  <!-- ADS CONFIG MODAL -->
+  <div id="userAdsModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="glass-monochrome p-6 rounded-2xl w-full max-w-lg space-y-3 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-white/20 pb-2">
+        <h3 class="text-xs font-cyber font-bold text-white uppercase"><i class="fa-solid fa-rectangle-ad"></i> Adsterra & Timer Settings</h3>
+        <button onclick="closeUserAdsModal()" class="text-gray-400 hover:text-white">&times;</button>
+      </div>
+
+      <div>
+        <label class="text-[10px] text-gray-400 block mb-1">⏱️ Loading Timer Duration (In Seconds)</label>
+        <input id="userTimerSeconds" type="number" value="5" min="3" max="60" class="w-full bg-black border border-white/20 p-2 text-xs rounded-lg text-white focus:outline-none">
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 block mb-1">Adsterra Direct Link / Smart Link URL</label>
+        <input id="userDirectLink" type="text" placeholder="https://..." class="w-full bg-black border border-white/20 p-2 text-xs rounded-lg text-white focus:outline-none">
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 block mb-1">Social Bar Script Code</label>
+        <textarea id="userSocialBar" rows="2" placeholder="<script ...></script>" class="w-full bg-black border border-white/20 p-2 text-xs rounded-lg text-white focus:outline-none font-mono"></textarea>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 block mb-1">Top Banner Ad Script Code</label>
+        <textarea id="userBannerTop" rows="2" placeholder="<script ...></script>" class="w-full bg-black border border-white/20 p-2 text-xs rounded-lg text-white focus:outline-none font-mono"></textarea>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 block mb-1">Bottom Banner Ad Script Code</label>
+        <textarea id="userBannerBottom" rows="2" placeholder="<script ...></script>" class="w-full bg-black border border-white/20 p-2 text-xs rounded-lg text-white focus:outline-none font-mono"></textarea>
+      </div>
+
+      <button onclick="saveUserAdsSettings()" class="w-full bg-white text-black font-cyber font-bold py-3 rounded-xl text-xs tracking-wider hover:bg-gray-200">SAVE CONFIGURATION</button>
+    </div>
+  </div>
+
+  <!-- VISITOR LANDING PAGE -->
+  <div id="landingView" class="hidden text-center py-6 my-auto">
+    <div id="topBannerContainer" class="mb-4 min-h-[90px] flex items-center justify-center border border-dashed border-white/20 rounded-xl overflow-hidden">
+      <span class="text-[10px] text-gray-500 font-cyber">[ TOP AD BANNER ]</span>
+    </div>
+
+    <div class="glass-monochrome p-8 rounded-2xl max-w-md mx-auto space-y-4">
+      <h2 class="text-xl font-cyber font-black text-white glitch-text" data-text="LOKO2K VERIFICATION">LOKO2K VERIFICATION</h2>
+      <p id="adStepIndicator" class="text-xs text-gray-400">Step 1: Click button below to generate link access.</p>
+      
+      <div id="adBtnContainer">
+        <a id="adActionBtn" href="#" target="_blank" onclick="handleVisitorAdClick()" class="block w-full btn-monochrome font-cyber font-black py-4 rounded-xl text-xs tracking-wider shadow-lg">
+          <i class="fa-solid fa-shield-halved"></i> UNLOCK LINK NOW
+        </a>
+      </div>
+
+      <div id="loadingContainer" class="hidden flex-col items-center justify-center py-4 space-y-3">
+        <div class="w-full flex justify-between items-center text-xs font-cyber">
+          <span class="text-gray-400">DECRYPTING LINK...</span>
+          <span id="percentText" class="text-white font-bold text-sm">0%</span>
+        </div>
+        <div class="w-full bg-black/80 h-3 rounded-full border border-white/30 overflow-hidden p-0.5">
+          <div id="progressBarFill" class="progress-bar-fill rounded-full"></div>
+        </div>
+        <p class="text-[10px] text-gray-400 font-mono animate-pulse">Please wait while we verify your request...</p>
+      </div>
+
+      <div id="manualTypingContainer" class="hidden pt-2 space-y-3">
+        <div class="bg-black border border-white/30 p-3 rounded-xl space-y-1">
+          <label class="text-[10px] font-cyber text-gray-400 block">MANUAL VERIFICATION CODE:</label>
+          <p id="generatedVerificationCode" class="text-base font-mono font-bold tracking-widest text-white select-all">LOKO-99</p>
+        </div>
+        <input id="userTypedCode" type="text" placeholder="Type verification code here..." class="w-full bg-black/90 border border-white/40 p-3 text-xs rounded-xl text-white text-center font-mono focus:outline-none uppercase">
+        <button onclick="verifyAndRedirect()" class="w-full btn-monochrome font-cyber font-black py-4 rounded-xl text-xs tracking-wider flex items-center justify-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-down"></i> GET LINK
+        </button>
+      </div>
+    </div>
+
+    <div id="bottomBannerContainer" class="mt-4 min-h-[250px] flex items-center justify-center border border-dashed border-white/20 rounded-xl overflow-hidden">
+      <span class="text-[10px] text-gray-500 font-cyber">[ BOTTOM AD BANNER ]</span>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_EMAIL = "admin@gmail.com";
+    let currentUser = localStorage.getItem('loko_session') || null;
+    let isSignupMode = false;
+    let currentClickStep = 1;
+    let requiredVerificationCode = "";
+    let destinationTargetUrl = "";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawSlugParam = urlParams.get('id');
+
+    window.onload = function() {
+      if (rawSlugParam) {
+        trackLinkClickAndShowLanding();
+      } else if (currentUser) {
+        showDashboardView();
+      } else {
+        showAuthView();
+      }
+    };
+
+    function getDBUsers() { return JSON.parse(localStorage.getItem('loko_users') || '{}'); }
+    function setDBUsers(data) { localStorage.setItem('loko_users', JSON.stringify(data)); }
+    function getDBLinks() { return JSON.parse(localStorage.getItem('loko_links') || '{}'); }
+    function setDBLinks(data) { localStorage.setItem('loko_links', JSON.stringify(data)); }
+    function getAdminConfig() { return JSON.parse(localStorage.getItem('loko_admin_config') || '{"requiredClicks": 2, "inviteCodes": ["LOKO2K-VIP"]}'); }
+    function setAdminConfig(data) { localStorage.setItem('loko_admin_config', JSON.stringify(data)); }
+
+    /* Universal Encoder & Decoder for Global Links */
+    function encodeUrl(url) {
+      try {
+        return btoa(encodeURIComponent(url)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      } catch (e) {
+        return btoa(url);
+      }
+    }
+
+    function decodeUrl(encoded) {
+      try {
+        // 1. Tanggalin ang mga nawawalang %20 at whitespace sa dulo/simula
+        let cleanEncoded = decodeURIComponent(encoded).trim();
+        
+        // 2. Ibalik ang URL-safe Base64 pabalik sa standard Base64
+        let base64 = cleanEncoded.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) { base64 += '='; }
+
+        // 3. I-decode
+        try {
+          return decodeURIComponent(atob(base64));
+        } catch (err) {
+          return atob(base64);
+        }
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function showDashboardView() {
+      document.getElementById('authView').classList.add('hidden');
+      document.getElementById('landingView').classList.add('hidden');
+      document.getElementById('dashboardView').classList.remove('hidden');
+
+      let navHtml = `<button onclick="openUserAdsModal()" class="bg-black border border-white/30 text-xs px-3 py-2 rounded-xl text-white font-cyber hover:bg-white hover:text-black transition"><i class="fa-solid fa-sliders"></i> Ads & Timer</button>`;
+
+      if (currentUser === ADMIN_EMAIL) {
+        navHtml += `<button onclick="openAdminPanel()" class="bg-white text-black font-cyber font-bold text-xs px-3 py-2 rounded-xl hover:bg-gray-200 transition"><i class="fa-solid fa-crown"></i> Admin</button>`;
+      }
+
+      navHtml += `<button onclick="logout()" class="bg-red-500/20 text-red-400 border border-red-500/30 text-xs px-3 py-2 rounded-xl font-cyber">Logout</button>`;
+      document.getElementById('navRight').innerHTML = navHtml;
+
+      loadLinksTable();
+    }
+
+    function showAuthView() {
+      document.getElementById('dashboardView').classList.add('hidden');
+      document.getElementById('landingView').classList.add('hidden');
+      document.getElementById('authView').classList.remove('hidden');
+    }
+
+    function toggleAuthMode() {
+      isSignupMode = !isSignupMode;
+      document.getElementById('authTitle').innerText = isSignupMode ? "REGISTER (INVITE ONLY)" : "AUTHENTICATE ACCESS";
+      document.getElementById('authPrimaryBtn').innerText = isSignupMode ? "REGISTER ACCOUNT" : "LOGIN";
+      document.getElementById('authToggleBtn').innerText = isSignupMode ? "Already have an account? Login" : "Have an invite code? Register here";
+      document.getElementById('inviteCodeContainer').classList.toggle('hidden', !isSignupMode);
+    }
+
+    function handleAuthSubmit() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPassword').value.trim();
+      const inviteCode = document.getElementById('authInviteCode').value.trim();
+      const users = getDBUsers();
+
+      if (!email || !pass) return alert("Fill in email and password!");
+
+      if (isSignupMode) {
+        const config = getAdminConfig();
+        if (!config.inviteCodes.includes(inviteCode)) {
+          return alert("Invalid or Expired Admin Invite Code!");
+        }
+        if (users[email]) return alert("Email is already registered!");
+
+        users[email] = { password: pass, timerSeconds: 5, directLink: '', socialBar: '', bannerTop: '', bannerBottom: '' };
+        setDBUsers(users);
+
+        config.inviteCodes = config.inviteCodes.filter(c => c !== inviteCode);
+        setAdminConfig(config);
+
+        alert("Registration Successful! You may now login.");
+        toggleAuthMode();
+      } else {
+        if (email === ADMIN_EMAIL && !users[ADMIN_EMAIL]) {
+          users[ADMIN_EMAIL] = { password: pass, timerSeconds: 5, directLink: '', socialBar: '', bannerTop: '', bannerBottom: '' };
+          setDBUsers(users);
+        }
+
+        if (users[email] && users[email].password === pass) {
+          currentUser = email;
+          localStorage.setItem('loko_session', email);
+          showDashboardView();
+        } else {
+          alert("Invalid Email or Password!");
+        }
+      }
+    }
+
+    function generateLink() {
+      const longUrl = document.getElementById('longUrl').value.trim();
+      const customSlug = document.getElementById('customSlug').value.trim() || 'Link';
+      if (!longUrl) return alert("Enter destination URL!");
+
+      const encodedTarget = encodeUrl(longUrl);
+      const links = getDBLinks();
+      
+      links[encodedTarget] = { label: customSlug, target: longUrl, owner: currentUser, views: 0 };
+      setDBLinks(links);
+
+      document.getElementById('longUrl').value = '';
+      document.getElementById('customSlug').value = '';
+      loadLinksTable();
+    }
+
+    function loadLinksTable() {
+      const links = getDBLinks();
+      const table = document.getElementById('linkList');
+      const userSlugs = Object.keys(links).filter(s => links[s].owner === currentUser);
+
+      let totalLinkViews = 0;
+      document.getElementById('statTotalLinks').innerText = userSlugs.length;
+
+      if (userSlugs.length === 0) {
+        table.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-500">No active shortlinks generated.</td></tr>';
+        document.getElementById('statLinkViews').innerText = "0";
+        return;
+      }
+
+      table.innerHTML = '';
+      userSlugs.forEach(encodedKey => {
+        const item = links[encodedKey];
+        const linkViews = item.views || 0;
+        totalLinkViews += linkViews;
+        const fullLink = window.location.origin + window.location.pathname + '?id=' + encodedKey;
+
+        table.innerHTML += `
+          <tr>
+            <td class="p-3 text-white font-mono font-bold">${item.label || 'Shortlink'}</td>
+            <td class="p-3 truncate max-w-[120px] text-gray-400">${item.target}</td>
+            <td class="p-3 font-cyber font-bold text-gray-300">${linkViews} views</td>
+            <td class="p-3 text-right">
+              <button class="bg-white text-black hover:bg-gray-200 px-3 py-1 rounded-lg border border-white font-cyber transition" onclick="navigator.clipboard.writeText('${fullLink}')">COPY SHAREABLE LINK</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('statLinkViews').innerText = totalLinkViews;
+    }
+
+    function openAdminPanel() {
+      const config = getAdminConfig();
+      const users = getDBUsers();
+      document.getElementById('adminAdClicks').value = config.requiredClicks || 2;
+      document.getElementById('userCount').innerText = Object.keys(users).length;
+
+      let userHtml = '';
+      Object.keys(users).forEach(email => { userHtml += `<div>• ${email}</div>`; });
+      document.getElementById('userList').innerHTML = userHtml;
+      document.getElementById('adminPanelModal').classList.remove('hidden');
+    }
+    function closeAdminPanel() { document.getElementById('adminPanelModal').classList.add('hidden'); }
+    
+    function generateInviteCode() {
+      const code = "LOKO2K-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById('generatedInviteCode').value = code;
+
+      const config = getAdminConfig();
+      config.inviteCodes.push(code);
+      setAdminConfig(config);
+    }
+
+    function saveAdminRules() {
+      const config = getAdminConfig();
+      config.requiredClicks = parseInt(document.getElementById('adminAdClicks').value);
+      setAdminConfig(config);
+      closeAdminPanel();
+      alert("Admin Global Rules Saved!");
+    }
+
+    function openUserAdsModal() {
+      const u = getDBUsers()[currentUser] || {};
+      document.getElementById('userTimerSeconds').value = u.timerSeconds || 5;
+      document.getElementById('userDirectLink').value = u.directLink || '';
+      document.getElementById('userSocialBar').value = u.socialBar || '';
+      document.getElementById('userBannerTop').value = u.bannerTop || '';
+      document.getElementById('userBannerBottom').value = u.bannerBottom || '';
+      document.getElementById('userAdsModal').classList.remove('hidden');
+    }
+    function closeUserAdsModal() { document.getElementById('userAdsModal').classList.add('hidden'); }
+    
+    function saveUserAdsSettings() {
+      const users = getDBUsers();
+      if (!users[currentUser]) users[currentUser] = {};
+      users[currentUser].timerSeconds = parseInt(document.getElementById('userTimerSeconds').value) || 5;
+      users[currentUser].directLink = document.getElementById('userDirectLink').value.trim();
+      users[currentUser].socialBar = document.getElementById('userSocialBar').value.trim();
+      users[currentUser].bannerTop = document.getElementById('userBannerTop').value.trim();
+      users[currentUser].bannerBottom = document.getElementById('userBannerBottom').value.trim();
+      setDBUsers(users);
+      closeUserAdsModal();
+      alert("Configuration Saved!");
+    }
+
+    function trackLinkClickAndShowLanding() {
+      if (!rawSlugParam) {
+        alert("Invalid Shortlink!");
+        showAuthView();
+        return;
+      }
+
+      // Decode at linisin ang target URL
+      destinationTargetUrl = decodeUrl(rawSlugParam);
+
+      if (!destinationTargetUrl) {
+        alert("Invalid Shortlink!");
+        showAuthView();
+        return;
+      }
+
+      // I-update ang views counter
+      const links = getDBLinks();
+      if (links[rawSlugParam]) {
+        links[rawSlugParam].views = (links[rawSlugParam].views || 0) + 1;
+        setDBLinks(links);
+      }
+
+      document.getElementById('authView').classList.add('hidden');
+      document.getElementById('dashboardView').classList.add('hidden');
+      document.getElementById('landingView').classList.remove('hidden');
+
+      // Gamitin ang Ad configuration ng Admin / Owner
+      const users = getDBUsers();
+      const ownerData = users[ADMIN_EMAIL] || {};
+
+      document.getElementById('adActionBtn').href = ownerData.directLink || "https://www.google.com";
+
+      if (ownerData.socialBar) renderScript('socialBarContainer', ownerData.socialBar);
+      if (ownerData.bannerTop) renderScript('topBannerContainer', ownerData.bannerTop);
+      if (ownerData.bannerBottom) renderScript('bottomBannerContainer', ownerData.bannerBottom);
+    }
+
+    function renderScript(containerId, scriptHtml) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = scriptHtml;
+      Array.from(container.querySelectorAll("script")).forEach(oldScript => {
+        const newScript = document.createElement("script");
+        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
+    }
+
+    function handleVisitorAdClick() {
+      const config = getAdminConfig();
+      const totalRequired = config.requiredClicks || 2;
+
+      document.getElementById('adBtnContainer').classList.add('hidden');
+      document.getElementById('loadingContainer').classList.remove('hidden');
+      document.getElementById('loadingContainer').classList.add('flex');
+
+      const users = getDBUsers();
+      const ownerData = users[ADMIN_EMAIL] || {};
+      const durationSeconds = ownerData.timerSeconds || 5;
+
+      let currentPercent = 0;
+      const intervalTime = (durationSeconds * 1000) / 100;
+      const progressBar = document.getElementById('progressBarFill');
+      const percentText = document.getElementById('percentText');
+
+      const progressInterval = setInterval(() => {
+        currentPercent++;
+        progressBar.style.width = currentPercent + "%";
+        percentText.innerText = currentPercent + "%";
+
+        if (currentPercent >= 100) {
+          clearInterval(progressInterval);
+          setTimeout(() => {
+            document.getElementById('loadingContainer').classList.add('hidden');
+            document.getElementById('loadingContainer').classList.remove('flex');
+
+            if (currentClickStep < totalRequired) {
+              currentClickStep++;
+              document.getElementById('adStepIndicator').innerText = `Step ${currentClickStep}: Click button again to complete access.`;
+              document.getElementById('adActionBtn').innerText = `UNLOCK LINK (STEP ${currentClickStep} OF ${totalRequired})`;
+              document.getElementById('adBtnContainer').classList.remove('hidden');
+            } else {
+              document.getElementById('adStepIndicator').innerText = "Security Test: Type code below to open link.";
+              
+              requiredVerificationCode = "LOKO-" + Math.floor(1000 + Math.random() * 9000);
+              document.getElementById('generatedVerificationCode').innerText = requiredVerificationCode;
+              
+              document.getElementById('manualTypingContainer').classList.remove('hidden');
+            }
+          }, 300);
+        }
+      }, intervalTime);
+    }
+
+    function verifyAndRedirect() {
+      const typedCode = document.getElementById('userTypedCode').value.trim().toUpperCase();
+      if (typedCode !== requiredVerificationCode) {
+        return alert("Incorrect verification code! Please type it carefully.");
+      }
+
+      if (destinationTargetUrl) {
+        window.location.href = destinationTargetUrl.startsWith('http') ? destinationTargetUrl : 'https://' + destinationTargetUrl;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('loko_session');
+      location.reload();
+    }
+  </script>
+</body>
+</html>
