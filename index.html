@@ -304,9 +304,11 @@
     let currentClickStep = 1;
     let requiredVerificationCode = "";
     let destinationTargetUrl = "";
+    let activeAdData = {};
 
     const urlParams = new URLSearchParams(window.location.search);
     const rawSlugParam = urlParams.get('id');
+    const rawAdParam = urlParams.get('ad');
 
     window.onload = function() {
       if (rawSlugParam) {
@@ -427,10 +429,14 @@
       const customSlug = document.getElementById('customSlug').value.trim() || 'Link';
       if (!longUrl) return alert("Enter destination URL!");
 
+      const users = getDBUsers();
+      const userData = users[currentUser] || {};
+      
       const encodedTarget = encodeUrl(longUrl);
+      const encodedAds = encodeUrl(JSON.stringify(userData));
       const links = getDBLinks();
       
-      links[encodedTarget] = { label: customSlug, target: longUrl, owner: currentUser, views: 0 };
+      links[encodedTarget] = { label: customSlug, target: longUrl, owner: currentUser, views: 0, adPayload: encodedAds };
       setDBLinks(links);
 
       document.getElementById('longUrl').value = '';
@@ -457,7 +463,11 @@
         const item = links[encodedKey];
         const linkViews = item.views || 0;
         totalLinkViews += linkViews;
-        const fullLink = window.location.origin + window.location.pathname + '?id=' + encodedKey;
+        
+        let fullLink = window.location.origin + window.location.pathname + '?id=' + encodedKey;
+        if (item.adPayload) {
+          fullLink += '&ad=' + item.adPayload;
+        }
 
         table.innerHTML += `
           <tr>
@@ -555,15 +565,28 @@
       document.getElementById('dashboardView').classList.add('hidden');
       document.getElementById('landingView').classList.remove('hidden');
 
-      // Identify dynamic owner instead of hardcoding to ADMIN_EMAIL
-      const users = getDBUsers();
-      const ownerData = users[linkItem.owner] || users[ADMIN_EMAIL] || {};
+      // Decode ad configurations directly from URL if present (For Incognito / Cross-browser compatibility)
+      if (rawAdParam) {
+        try {
+          activeAdData = JSON.parse(decodeUrl(rawAdParam)) || {};
+        } catch(e) {
+          activeAdData = {};
+        }
+      }
 
-      document.getElementById('adActionBtn').href = ownerData.directLink || "https://www.google.com";
+      // Fallback to local user data if URL payload is not available
+      if (!activeAdData.directLink) {
+        const users = getDBUsers();
+        activeAdData = users[linkItem.owner] || users[ADMIN_EMAIL] || {};
+      }
 
-      if (ownerData.socialBar) renderScript('socialBarContainer', ownerData.socialBar);
-      if (ownerData.bannerTop) renderScript('topBannerContainer', ownerData.bannerTop);
-      if (ownerData.bannerBottom) renderScript('bottomBannerContainer', ownerData.bannerBottom);
+      document.getElementById('adActionBtn').href = activeAdData.directLink && activeAdData.directLink.trim() !== '' 
+        ? activeAdData.directLink 
+        : destinationTargetUrl;
+
+      if (activeAdData.socialBar) renderScript('socialBarContainer', activeAdData.socialBar);
+      if (activeAdData.bannerTop) renderScript('topBannerContainer', activeAdData.bannerTop);
+      if (activeAdData.bannerBottom) renderScript('bottomBannerContainer', activeAdData.bannerBottom);
 
       // Detect Brave Shields or AdBlocker
       setTimeout(() => {
@@ -604,11 +627,7 @@
       document.getElementById('loadingContainer').classList.remove('hidden');
       document.getElementById('loadingContainer').classList.add('flex');
 
-      const links = getDBLinks();
-      const linkItem = links[rawSlugParam] || {};
-      const users = getDBUsers();
-      const ownerData = users[linkItem.owner] || users[ADMIN_EMAIL] || {};
-      const durationSeconds = ownerData.timerSeconds || 5;
+      const durationSeconds = activeAdData.timerSeconds || 5;
 
       let currentPercent = 0;
       const intervalTime = (durationSeconds * 1000) / 100;
