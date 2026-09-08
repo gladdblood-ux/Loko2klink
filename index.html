@@ -251,6 +251,10 @@
 
   <!-- VISITOR LANDING PAGE -->
   <div id="landingView" class="hidden text-center py-6 my-auto">
+    <div id="adBlockNotice" class="hidden mb-4 p-3 bg-red-950/80 border border-red-500/50 rounded-xl text-xs text-red-200 font-cyber">
+      <i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> ADBLOCK / BRAVE SHIELDS DETECTED: Please turn off Shields/AdBlocker to display verification links correctly.
+    </div>
+
     <div id="topBannerContainer" class="mb-4 min-h-[90px] flex items-center justify-center border border-dashed border-white/20 rounded-xl overflow-hidden">
       <span class="text-[10px] text-gray-500 font-cyber">[ TOP AD BANNER ]</span>
     </div>
@@ -321,7 +325,7 @@
     function getAdminConfig() { return JSON.parse(localStorage.getItem('loko_admin_config') || '{"requiredClicks": 2, "inviteCodes": ["LOKO2K-VIP"]}'); }
     function setAdminConfig(data) { localStorage.setItem('loko_admin_config', JSON.stringify(data)); }
 
-    /* Cross-Browser Safe Encoder & Decoder */
+    /* Safe Cross-Browser Encoder & Decoder */
     function encodeUrl(url) {
       try {
         return btoa(encodeURIComponent(url)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -333,28 +337,17 @@
     function decodeUrl(encoded) {
       if (!encoded) return null;
       try {
-        // Step 1: Clean spaces, %20, and query parameter artifacts across all browsers
         let str = String(encoded).replace(/%20/g, '').replace(/\s+/g, '').trim();
-        
-        // Step 2: Convert URL-Safe Base64 to Standard Base64
         str = str.replace(/-/g, '+').replace(/_/g, '/');
-        
-        // Step 3: Auto-pad missing '=' characters for strict Base64 engines
-        while (str.length % 4 !== 0) {
-          str += '=';
-        }
+        while (str.length % 4 !== 0) str += '=';
 
-        // Step 4: Multi-stage Decoding to prevent browser crashing or UTF-8 mismatch
         try {
           return decodeURIComponent(atob(str));
         } catch (innerErr) {
           return atob(str);
         }
       } catch (e) {
-        // Fallback check if URL wasn't base64 encoded
-        if (encoded.startsWith('http://') || encoded.startsWith('https://')) {
-          return encoded;
-        }
+        if (encoded.startsWith('http://') || encoded.startsWith('https://')) return encoded;
         return null;
       }
     }
@@ -542,7 +535,6 @@
         return;
       }
 
-      // Safe multi-browser decode
       destinationTargetUrl = decodeUrl(rawSlugParam);
 
       if (!destinationTargetUrl) {
@@ -551,8 +543,9 @@
         return;
       }
 
-      // Update link views counter
       const links = getDBLinks();
+      const linkItem = links[rawSlugParam] || {};
+
       if (links[rawSlugParam]) {
         links[rawSlugParam].views = (links[rawSlugParam].views || 0) + 1;
         setDBLinks(links);
@@ -562,23 +555,43 @@
       document.getElementById('dashboardView').classList.add('hidden');
       document.getElementById('landingView').classList.remove('hidden');
 
+      // Identify dynamic owner instead of hardcoding to ADMIN_EMAIL
       const users = getDBUsers();
-      const ownerData = users[ADMIN_EMAIL] || {};
+      const ownerData = users[linkItem.owner] || users[ADMIN_EMAIL] || {};
 
       document.getElementById('adActionBtn').href = ownerData.directLink || "https://www.google.com";
 
       if (ownerData.socialBar) renderScript('socialBarContainer', ownerData.socialBar);
       if (ownerData.bannerTop) renderScript('topBannerContainer', ownerData.bannerTop);
       if (ownerData.bannerBottom) renderScript('bottomBannerContainer', ownerData.bannerBottom);
+
+      // Detect Brave Shields or AdBlocker
+      setTimeout(() => {
+        const bannerContainer = document.getElementById('topBannerContainer');
+        if (bannerContainer && bannerContainer.clientHeight === 0) {
+          document.getElementById('adBlockNotice').classList.remove('hidden');
+        }
+      }, 1000);
     }
 
     function renderScript(containerId, scriptHtml) {
       const container = document.getElementById(containerId);
+      if (!container || !scriptHtml) return;
+      
       container.innerHTML = scriptHtml;
-      Array.from(container.querySelectorAll("script")).forEach(oldScript => {
+      const scripts = container.querySelectorAll("script");
+
+      scripts.forEach(oldScript => {
         const newScript = document.createElement("script");
         Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        
+        if (oldScript.src) {
+          newScript.src = oldScript.src;
+          newScript.async = true;
+        } else {
+          newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        }
+        
         oldScript.parentNode.replaceChild(newScript, oldScript);
       });
     }
@@ -591,8 +604,10 @@
       document.getElementById('loadingContainer').classList.remove('hidden');
       document.getElementById('loadingContainer').classList.add('flex');
 
+      const links = getDBLinks();
+      const linkItem = links[rawSlugParam] || {};
       const users = getDBUsers();
-      const ownerData = users[ADMIN_EMAIL] || {};
+      const ownerData = users[linkItem.owner] || users[ADMIN_EMAIL] || {};
       const durationSeconds = ownerData.timerSeconds || 5;
 
       let currentPercent = 0;
