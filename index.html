@@ -321,7 +321,7 @@
     function getAdminConfig() { return JSON.parse(localStorage.getItem('loko_admin_config') || '{"requiredClicks": 2, "inviteCodes": ["LOKO2K-VIP"]}'); }
     function setAdminConfig(data) { localStorage.setItem('loko_admin_config', JSON.stringify(data)); }
 
-    /* Universal Encoder & Decoder for Global Links */
+    /* Cross-Browser Safe Encoder & Decoder */
     function encodeUrl(url) {
       try {
         return btoa(encodeURIComponent(url)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -331,21 +331,30 @@
     }
 
     function decodeUrl(encoded) {
+      if (!encoded) return null;
       try {
-        // 1. Tanggalin ang mga nawawalang %20 at whitespace sa dulo/simula
-        let cleanEncoded = decodeURIComponent(encoded).trim();
+        // Step 1: Clean spaces, %20, and query parameter artifacts across all browsers
+        let str = String(encoded).replace(/%20/g, '').replace(/\s+/g, '').trim();
         
-        // 2. Ibalik ang URL-safe Base64 pabalik sa standard Base64
-        let base64 = cleanEncoded.replace(/-/g, '+').replace(/_/g, '/');
-        while (base64.length % 4) { base64 += '='; }
+        // Step 2: Convert URL-Safe Base64 to Standard Base64
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        
+        // Step 3: Auto-pad missing '=' characters for strict Base64 engines
+        while (str.length % 4 !== 0) {
+          str += '=';
+        }
 
-        // 3. I-decode
+        // Step 4: Multi-stage Decoding to prevent browser crashing or UTF-8 mismatch
         try {
-          return decodeURIComponent(atob(base64));
-        } catch (err) {
-          return atob(base64);
+          return decodeURIComponent(atob(str));
+        } catch (innerErr) {
+          return atob(str);
         }
       } catch (e) {
+        // Fallback check if URL wasn't base64 encoded
+        if (encoded.startsWith('http://') || encoded.startsWith('https://')) {
+          return encoded;
+        }
         return null;
       }
     }
@@ -533,7 +542,7 @@
         return;
       }
 
-      // Decode at linisin ang target URL
+      // Safe multi-browser decode
       destinationTargetUrl = decodeUrl(rawSlugParam);
 
       if (!destinationTargetUrl) {
@@ -542,7 +551,7 @@
         return;
       }
 
-      // I-update ang views counter
+      // Update link views counter
       const links = getDBLinks();
       if (links[rawSlugParam]) {
         links[rawSlugParam].views = (links[rawSlugParam].views || 0) + 1;
@@ -553,7 +562,6 @@
       document.getElementById('dashboardView').classList.add('hidden');
       document.getElementById('landingView').classList.remove('hidden');
 
-      // Gamitin ang Ad configuration ng Admin / Owner
       const users = getDBUsers();
       const ownerData = users[ADMIN_EMAIL] || {};
 
@@ -628,7 +636,11 @@
       }
 
       if (destinationTargetUrl) {
-        window.location.href = destinationTargetUrl.startsWith('http') ? destinationTargetUrl : 'https://' + destinationTargetUrl;
+        const finalUrl = destinationTargetUrl.startsWith('http://') || destinationTargetUrl.startsWith('https://') 
+          ? destinationTargetUrl 
+          : 'https://' + destinationTargetUrl;
+        
+        window.location.href = finalUrl;
       }
     }
 
